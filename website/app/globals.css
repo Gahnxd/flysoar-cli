@@ -268,8 +268,8 @@ h1 {
 .install-card {
   display: flex;
   position: relative;
-  width: min(590px, 100%);
-  align-items: flex-start;
+  width: min(660px, 100%);
+  align-items: center;
   padding: 16px 18px;
   overflow: visible;
   border: 1px solid var(--line);
@@ -295,14 +295,21 @@ h1 {
 }
 
 .terminal-dot {
+  display: inline-block;
+  vertical-align: middle;
   width: 8px;
   height: 8px;
-  margin-right: 13px;
-  margin-top: 6px;
+  margin-right: 8px;
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 12px rgba(142, 160, 255, 0.9);
+  animation: dot-glow-blink 1000ms ease-in-out infinite;
+}
+
+@keyframes dot-glow-blink {
+  0%, 100% { opacity: 0.4; transform: scale(0.82); }
+  50% { opacity: 1; transform: scale(1); }
 }
 
 .install-card code {
@@ -493,21 +500,12 @@ h1 {
   gap: 8px;
   min-height: 1.55em;
   margin-top: 8px;
-  color: var(--faint);
+  color: var(--muted);
   opacity: 0;
 }
 
 .terminal-running .terminal-searching {
   animation: terminal-line-in 360ms 1s ease-out forwards;
-}
-
-.search-pulse {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 10px var(--accent);
-  animation: search-blink 900ms ease-in-out infinite;
 }
 
 .search-dots {
@@ -609,11 +607,6 @@ h1 {
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes search-blink {
-  0%, 100% { opacity: 0.35; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1); }
-}
-
 @keyframes dot-blink {
   0%, 20% { opacity: 0; }
   40%, 100% { opacity: 1; }
@@ -665,7 +658,7 @@ h1 {
 
 /* ---------- Usage tabs ---------- */
 .usage-card {
-  max-width: 825px;
+  max-width: 860px;
   margin: 0 auto;
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -720,13 +713,14 @@ h1 {
 
 .usage-command {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
   padding: 22px 22px;
 }
 
-.json-command-panel {
-  align-items: flex-start;
+.usage-command .terminal-dot {
+  margin-right: 0;
+  margin-top: 7px;
 }
 
 .json-command {
@@ -774,6 +768,7 @@ h1 {
   overflow-x: auto;
   font-family: var(--font-mono);
   font-size: clamp(0.78rem, 1.8vw, 0.92rem);
+  line-height: 1.75;
   white-space: pre-wrap;
   word-break: break-all;
   color: #e6e7ee;
@@ -782,6 +777,19 @@ h1 {
 .usage-command .prompt {
   color: var(--accent);
   margin-right: 8px;
+}
+
+.flag-highlight {
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+.example-cursor {
+  margin-left: 2px;
+  color: var(--accent);
+  animation: terminal-cursor-blink 900ms steps(1, end) infinite;
 }
 
 .usage-tab {
@@ -800,7 +808,8 @@ h1 {
 
 .usage-copy {
   flex: 0 0 auto;
-  align-self: center;
+  align-self: flex-start;
+  margin-top: -5px;
   width: 54px;
   padding: 8px;
   border: 1px solid var(--line);

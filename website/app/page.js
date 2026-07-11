@@ -11,34 +11,42 @@ const commandExamples = [
   {
     label: "One-way",
     command: "flysoar search -o SFO -d JFK -D 2026-07-15",
+    highlights: ["-o SFO", "-d JFK"],
   },
   {
     label: "Round-trip",
     command: "flysoar search -o SFO -d JFK -D 2026-07-15 -r 2026-07-22 -c business",
+    highlights: ["-D 2026-07-15", "-r 2026-07-22"],
   },
   {
     label: "Multi-city",
     command: "flysoar search --slices SFO,JFK,2026-07-15 LHR,SFO,2026-07-22",
+    highlights: ["--slices"],
   },
   {
     label: "Table",
     command: "flysoar search -o SFO -d JFK -D 2026-07-15 -O table --nonstop-only -s price",
+    highlights: ["-O table"],
   },
   {
     label: "CSV",
     command: "flysoar search -o NYC -d LON -D 2026-08-01 -O csv -n 20 > flights.csv",
+    highlights: ["-O csv", "> flights.csv"],
   },
   {
     label: "JSON input",
     command: "flysoar search --input '{\"origin\":\"SFO\",\"destination\":\"JFK\",\"date\":\"2026-07-15\"}'",
+    highlights: ["--input"],
   },
   {
     label: "Save",
     command: "flysoar search -o SFO -d JFK -D 2026-07-15 --save results.json",
+    highlights: ["--save results.json"],
   },
   {
     label: "Piped",
     command: "flysoar search -o NYC -d LON -D 2026-08-01 -q | jq '.offers[0].price'",
+    highlights: ["-q"],
   },
 ];
 
@@ -131,6 +139,7 @@ function TerminalDemo() {
       </div>
       <div className="terminal-body">
         <div className="terminal-command">
+          <span className="terminal-dot" aria-hidden="true" />
           <span className="prompt">$</span>{" "}
           {started && (
             <TextType
@@ -145,7 +154,6 @@ function TerminalDemo() {
         </div>
 
         <div className="terminal-searching">
-          <span className="search-pulse" aria-hidden="true" />
           searching flysoar.ai<span className="search-dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span>
         </div>
 
@@ -176,11 +184,11 @@ function TerminalDemo() {
   );
 }
 
-function JsonTree() {
+function JsonTree({ highlights }) {
   return (
     <code className="json-command" role="tree" aria-label="JSON input command">
-      <span className="json-line"><span className="prompt">$</span> <TextType as="span" text="flysoar search --input '" typingSpeed={5} initialDelay={0} loop={false} showCursor={false} /></span>
-      <span className="json-line"><span className="json-brace"><TextType as="span" text="{" typingSpeed={5} initialDelay={170} loop={false} showCursor={false} /></span></span>
+      <span className="json-line"><span className="prompt">$</span> <TypedCommand command="flysoar search --input '" highlights={highlights} typingSpeed={5} initialDelay={0} showCursor={false} /></span>
+      <span className="json-line"><span className="json-brace"><TextType as="span" text="{" typingSpeed={5} initialDelay={150} loop={false} showCursor={false} /></span></span>
         {Object.entries(jsonInputExample).map(([key, value], index) => (
           <span className="json-line json-child" key={key} role="treeitem">
             <TextType
@@ -189,13 +197,87 @@ function JsonTree() {
               typingSpeed={5}
               initialDelay={260 + index * 150}
               loop={false}
-              showCursor={false}
+              showCursor={index === Object.keys(jsonInputExample).length - 1}
+              hideCursorWhileTyping
+              cursorCharacter="|"
+              cursorBlinkDuration={0.7}
+              cursorClassName="cursor"
               className="json-value"
             />
           </span>
         ))}
-      <span className="json-line"><span className="json-brace"><TextType as="span" text="}'" typingSpeed={5} initialDelay={1_050} loop={false} showCursor={false} /></span></span>
+      <span className="json-line"><span className="json-brace"><TextType as="span" text="}'" typingSpeed={5} initialDelay={190} loop={false} showCursor={false} /></span></span>
     </code>
+  );
+}
+
+function TypedCommand({ command, highlights, typingSpeed = 5, initialDelay = 30, showCursor = true }) {
+  const [revealCount, setRevealCount] = useState(0);
+
+  useEffect(() => {
+    setRevealCount(0);
+    let interval;
+    const startTimer = window.setTimeout(() => {
+      let i = 0;
+      interval = window.setInterval(() => {
+        i += 1;
+        setRevealCount(i);
+        if (i >= command.length) {
+          window.clearInterval(interval);
+        }
+      }, typingSpeed);
+    }, initialDelay);
+
+    return () => {
+      window.clearTimeout(startTimer);
+      window.clearInterval(interval);
+    };
+  }, [command, typingSpeed, initialDelay]);
+
+  const revealedText = command.slice(0, revealCount);
+  const done = revealCount >= command.length;
+
+  // Resolve each highlight substring to a [start, end) range within `command`,
+  // sorted and de-overlapped so multiple highlighted parts render correctly.
+  const ranges = (highlights || [])
+    .map((part) => {
+      const start = command.indexOf(part);
+      return start === -1 ? null : { start, end: start + part.length };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.start - b.start);
+
+  let content;
+  if (ranges.length === 0) {
+    content = revealedText;
+  } else {
+    const pieces = [];
+    let cursor = 0;
+    ranges.forEach((range, i) => {
+      const start = Math.min(range.start, revealedText.length);
+      const end = Math.min(range.end, revealedText.length);
+      if (start > cursor) {
+        pieces.push(revealedText.slice(cursor, start));
+      }
+      const highlighted = revealedText.slice(start, end);
+      if (highlighted) {
+        pieces.push(<span className="flag-highlight" key={i}>{highlighted}</span>);
+      }
+      cursor = Math.max(cursor, end);
+    });
+    if (cursor < revealedText.length) {
+      pieces.push(revealedText.slice(cursor));
+    }
+    content = pieces;
+  }
+
+  return (
+    <span className="text-type">
+      <span className="text-type-content">{content}</span>
+      {showCursor && done && (
+        <span className="example-cursor" aria-hidden="true">|</span>
+      )}
+    </span>
   );
 }
 
@@ -225,6 +307,21 @@ export default function Home() {
     return () => {
       window.removeEventListener("pointermove", onMove);
     };
+  }, []);
+
+  useEffect(() => {
+    // All glowing dots across the page (hero, terminal demo, example box)
+    // share the same animation duration. Resetting them together on mount
+    // forces every instance to restart its pulse on the exact same tick,
+    // so they all stay perfectly in phase with each other.
+    const dots = document.querySelectorAll(".terminal-dot");
+    dots.forEach((dot) => {
+      dot.style.animation = "none";
+    });
+    void document.body.offsetHeight;
+    dots.forEach((dot) => {
+      dot.style.animation = "";
+    });
   }, []);
 
   async function copyInstallCommand() {
@@ -337,11 +434,13 @@ export default function Home() {
               ))}
             </div>
             <div className={`usage-command${isJsonExample ? " json-command-panel" : ""}`}>
+              <div className="terminal-dot" aria-hidden="true" />
               {isJsonExample ? (
-                <JsonTree />
+                <JsonTree highlights={commandExamples[activeExample].highlights} />
               ) : (
                 <code>
-                  <span className="prompt">$</span> <TextType as="span" key={exampleKey} text={commandExamples[activeExample].command} typingSpeed={5} initialDelay={30} loop={false} startOnVisible showCursor={false} />
+                  <span className="prompt">$</span>{" "}
+                  <TypedCommand key={exampleKey} command={commandExamples[activeExample].command} highlights={commandExamples[activeExample].highlights} />
                 </code>
               )}
               <button
