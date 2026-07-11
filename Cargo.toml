@@ -1,0 +1,23 @@
+[package]
+name = "flysoar"
+version = "0.1.0"
+edition = "2024"
+description = "CLI for searching flights via FlySoar.ai's anonymous public API"
+license = "MIT"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+reqwest = { version = "0.12", features = ["stream", "json"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+anyhow = "1"
+comfy-table = "7"
+csv = "1"
+futures-util = "0.3"
+indicatif = "0.17"
+
+[profile.release]
+opt-level = 3
+lto = true
