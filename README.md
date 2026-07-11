@@ -25,13 +25,13 @@ CLI for searching flights via [FlySoar.ai](https://flysoar.ai)'s public API. No 
 Install the latest GitHub Release binary:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Gahnxd/flysoar-cli/main/install.sh | sh
+curl -fsSL https://flysoar-cli.vercel.app/install.sh | sh
 ```
 
 To install a specific version or directory:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Gahnxd/flysoar-cli/main/install.sh | \
+curl -fsSL https://flysoar-cli.vercel.app/install.sh | \
   FLYSOAR_VERSION=v0.1.0 FLYSOAR_INSTALL_DIR="$HOME/.local/bin" sh
 ```
 

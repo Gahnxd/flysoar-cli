@@ -5,7 +5,7 @@ import TextType from "../components/TextType";
 import LiveFlightScene from "../components/LiveFlightScene";
 
 const installCommand =
-  "curl -fsSL https://raw.githubusercontent.com/Gahnxd/flysoar-cli/main/install.sh | sh";
+  "curl -fsSL https://flysoar-cli.vercel.app/install.sh | sh";
 
 const commandExamples = [
   {

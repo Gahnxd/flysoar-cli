@@ -1,3 +1,4 @@
 /target
 /website/.next
 /website/node_modules
+/website/public/install.sh
