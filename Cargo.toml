@@ -1,8 +1,8 @@
 [package]
 name = "flysoar"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
-description = "CLI for searching flights via FlySoar.ai's anonymous public API"
+description = "CLI for searching flights via FlySoar.ai's public API"
 license = "MIT"
 
 [dependencies]

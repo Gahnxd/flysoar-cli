@@ -8,9 +8,10 @@ use std::process::ExitCode;
 use anyhow::{Result, bail};
 use chrono::{Datelike, NaiveDate};
 use clap::{Parser, Subcommand};
+use indicatif::{ProgressBar, ProgressStyle};
 use models::{Offer, SearchRequest, SliceRequest};
 
-/// CLI for searching flights via FlySoar.ai's anonymous public API.
+/// CLI for searching flights via FlySoar.ai's public API.
 ///
 /// No accounts, API keys, or authentication required.
 /// Searches are performed against the live FlySoar.ai SSE endpoint.
@@ -19,7 +20,7 @@ use models::{Offer, SearchRequest, SliceRequest};
     name = "flysoar",
     version,
     about = "Search flights via FlySoar.ai's public API",
-    long_about = "CLI for searching flights via FlySoar.ai's anonymous public SSE endpoint.\n\
+    long_about = "CLI for searching flights via FlySoar.ai's public SSE endpoint.\n\
                   No accounts, API keys, or authentication required.\n\n\
                   Supports one-way, round-trip, open-jaw, and multi-city searches.\n\
                   Output formats: JSON (default), CSV, or table."
@@ -128,6 +129,32 @@ fn home_dir() -> std::path::PathBuf {
     std::env::var("HOME")
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|_| std::path::PathBuf::from("/"))
+}
+
+/// Runs `f` while showing a braille spinner next to `message`, then
+/// replaces it with a `✓`/`✗` line reflecting whether it succeeded.
+fn run_step<F, T>(message: &str, f: F) -> Result<T>
+where
+    F: FnOnce() -> Result<T>,
+{
+    let pb = ProgressBar::new_spinner();
+    pb.enable_steady_tick(std::time::Duration::from_millis(80));
+    pb.set_style(
+        ProgressStyle::with_template("{spinner} {msg}")
+            .unwrap_or_else(|_| ProgressStyle::default_spinner())
+            .tick_chars("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏⠋"),
+    );
+    pb.set_message(message.to_string());
+
+    let result = f();
+    pb.finish_and_clear();
+
+    match &result {
+        Ok(_) => println!("✓ {}", message),
+        Err(_) => println!("✗ {}", message),
+    }
+
+    result
 }
 
 fn validate_iata(code: &str) -> Result<()> {
@@ -511,27 +538,35 @@ async fn run(cli: Cli) -> Result<()> {
                     .unwrap_or_else(|_| ".".to_string())
             });
 
-            eprintln!("Reinstalling flysoar from {}...", source_path);
+            run_step("Reinstalling flysoar", || {
+                let output = std::process::Command::new("cargo")
+                    .args(["install", "--path", ".", "--force"])
+                    .current_dir(&source_path)
+                    .output()
+                    .map_err(|e| anyhow::anyhow!("Failed to run cargo install: {}", e))?;
 
-            let status = std::process::Command::new("cargo")
-                .args(["install", "--path", ".", "--force"])
-                .current_dir(&source_path)
-                .status()
-                .map_err(|e| anyhow::anyhow!("Failed to run cargo install: {}", e))?;
+                if !output.status.success() {
+                    bail!(
+                        "cargo install failed with exit code {:?}\n{}",
+                        output.status.code(),
+                        String::from_utf8_lossy(&output.stderr)
+                    );
+                }
 
-            if !status.success() {
-                bail!("cargo install failed with exit code {:?}", status.code());
-            }
+                Ok(())
+            })?;
 
-            eprintln!("flysoar updated successfully.");
+            println!("flysoar updated successfully.");
             Ok(())
         }
 
         Commands::Info => {
-            let cargo_bin = std::env::var("CARGO_HOME")
-                .map(std::path::PathBuf::from)
-                .unwrap_or_else(|_| home_dir().join(".cargo"));
-            let bin_path = cargo_bin.join("bin").join("flysoar");
+            let bin_path = std::env::current_exe().unwrap_or_else(|_| {
+                let cargo_bin = std::env::var("CARGO_HOME")
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or_else(|_| home_dir().join(".cargo"));
+                cargo_bin.join("bin").join("flysoar")
+            });
 
             let version = env!("CARGO_PKG_VERSION");
             let installed = bin_path.exists();
@@ -551,19 +586,23 @@ async fn run(cli: Cli) -> Result<()> {
         }
 
         Commands::Uninstall => {
-            let cargo_bin = std::env::var("CARGO_HOME")
-                .map(std::path::PathBuf::from)
-                .unwrap_or_else(|_| home_dir().join(".cargo"));
-
-            let bin_path = cargo_bin.join("bin").join("flysoar");
+            let bin_path = std::env::current_exe().unwrap_or_else(|_| {
+                let cargo_bin = std::env::var("CARGO_HOME")
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or_else(|_| home_dir().join(".cargo"));
+                cargo_bin.join("bin").join("flysoar")
+            });
 
             if !bin_path.exists() {
                 eprintln!("flysoar is not installed at {}", bin_path.display());
                 return Ok(());
             }
 
-            std::fs::remove_file(&bin_path)
-                .map_err(|e| anyhow::anyhow!("Failed to remove {}: {}", bin_path.display(), e))?;
+            run_step("Uninstalling flysoar", || {
+                std::fs::remove_file(&bin_path).map_err(|e| {
+                    anyhow::anyhow!("Failed to remove {}: {}", bin_path.display(), e)
+                })
+            })?;
             println!("Uninstalled flysoar from {}", bin_path.display());
             Ok(())
         }
