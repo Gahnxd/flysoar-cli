@@ -1,6 +1,6 @@
 # flysoar
 
-CLI for searching flights via [FlySoar.ai](https://flysoar.ai)'s anonymous public API. No accounts, API keys, or authentication required.
+CLI for searching flights via [FlySoar.ai](https://flysoar.ai)'s public API. No accounts, API keys, or authentication required.
 
 ## Features
 
@@ -45,11 +45,19 @@ cargo install --path .
 
 This installs the `flysoar` binary to `~/.cargo/bin/`. Make sure `~/.cargo/bin` is on your PATH.
 
-Or build from source:
+```bash
+flysoar search -o SFO -d JFK -D 2026-07-15
+```
+
+Build the binary without installing:
 
 ```bash
 cargo build --release
-# Binary at target/release/flysoar
+# Binary at target/release/flysoar (not added to PATH)
+```
+
+```bash
+./target/release/flysoar search -o SFO -d JFK -D 2026-07-15
 ```
 
 ## Uninstall
@@ -58,7 +66,9 @@ cargo build --release
 flysoar uninstall
 ```
 
-Or via cargo:
+This removes whichever binary is currently running (works regardless of whether you installed via `install.sh` or `cargo install`).
+
+If you installed via cargo, you can alternatively run:
 
 ```bash
 cargo uninstall flysoar
@@ -67,7 +77,7 @@ cargo uninstall flysoar
 ## Usage
 
 ```
-CLI for searching flights via FlySoar.ai's anonymous public SSE endpoint.
+CLI for searching flights via FlySoar.ai's public SSE endpoint.
 No accounts, API keys, or authentication required.
 
 Supports one-way, round-trip, open-jaw, and multi-city searches.
@@ -220,4 +230,4 @@ Flat CSV with columns: price, currency, stops, airline, flight_numbers, depart_t
 
 ## How It Works
 
-The CLI sends a `POST` request to `https://flysoar.ai/api/search/stream` and parses the Server-Sent Events (SSE) stream, collecting `event: offer` payloads until `event: done`. No API key or authentication is needed — the endpoint is fully public and anonymous.
+The CLI sends a `POST` request to `https://flysoar.ai/api/search/stream` and parses the Server-Sent Events (SSE) stream, collecting `event: offer` payloads until `event: done`. No API key or authentication is needed — the endpoint is fully public.
