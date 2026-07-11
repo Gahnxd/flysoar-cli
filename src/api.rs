@@ -1,9 +1,9 @@
 use anyhow::{Context, Result, bail};
 use futures_util::StreamExt;
-use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::header::{ACCEPT, CONTENT_TYPE, HeaderMap, HeaderValue, ORIGIN, REFERER, USER_AGENT};
 
 use crate::models::{Offer, SearchRequest, SseError};
+use crate::spinner::Spinner;
 use crate::sse::{SseEvent, SseParser};
 
 const FLYSOAR_URL: &str = "https://flysoar.ai/api/search/stream";
@@ -62,17 +62,10 @@ pub async fn search(
     timeout_secs: u64,
     quiet: bool,
 ) -> Result<Vec<Offer>> {
-    let pb = if quiet {
-        ProgressBar::hidden()
+    let mut pb = if quiet {
+        Spinner::hidden()
     } else {
-        let pb = ProgressBar::new_spinner();
-        pb.enable_steady_tick(std::time::Duration::from_millis(100));
-        pb.set_style(
-            ProgressStyle::with_template("{spinner} {msg}")
-                .unwrap_or_else(|_| ProgressStyle::default_spinner()),
-        );
-        pb.set_message("Searching FlySoar.ai...");
-        pb
+        Spinner::new("Searching FlySoar.ai...")
     };
 
     let response = client
@@ -118,7 +111,7 @@ pub async fn search(
             let trimmed = line.trim_end_matches('\r');
 
             if let Some(event) = parser.push_line(trimmed)
-                && handle_event(event, &mut offers, &pb, max_offers)?
+                && handle_event(event, &mut offers, &mut pb, max_offers)?
             {
                 return Ok(offers);
             }
@@ -129,14 +122,14 @@ pub async fn search(
     if !buffer.is_empty() {
         let line = String::from_utf8_lossy(&buffer);
         if let Some(event) = parser.push_line(line.trim_end_matches('\r'))
-            && handle_event(event, &mut offers, &pb, max_offers)?
+            && handle_event(event, &mut offers, &mut pb, max_offers)?
         {
             return Ok(offers);
         }
     }
 
     if let Some(event) = parser.flush()
-        && handle_event(event, &mut offers, &pb, max_offers)?
+        && handle_event(event, &mut offers, &mut pb, max_offers)?
     {
         return Ok(offers);
     }
@@ -148,7 +141,7 @@ pub async fn search(
 fn handle_event(
     event: SseEvent,
     offers: &mut Vec<Offer>,
-    progress: &ProgressBar,
+    progress: &mut Spinner,
     max_offers: usize,
 ) -> Result<bool> {
     match event.event.as_str() {

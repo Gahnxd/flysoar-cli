@@ -1,6 +1,7 @@
 mod api;
 mod models;
 mod output;
+mod spinner;
 mod sse;
 
 use std::process::ExitCode;
@@ -8,7 +9,6 @@ use std::process::ExitCode;
 use anyhow::{Result, bail};
 use chrono::{Datelike, NaiveDate};
 use clap::{Parser, Subcommand};
-use indicatif::{ProgressBar, ProgressStyle};
 use models::{Offer, SearchRequest, SliceRequest};
 
 /// CLI for searching flights via FlySoar.ai's public API.
@@ -137,21 +137,12 @@ fn run_step<F, T>(message: &str, f: F) -> Result<T>
 where
     F: FnOnce() -> Result<T>,
 {
-    let pb = ProgressBar::new_spinner();
-    pb.enable_steady_tick(std::time::Duration::from_millis(80));
-    pb.set_style(
-        ProgressStyle::with_template("{spinner} {msg}")
-            .unwrap_or_else(|_| ProgressStyle::default_spinner())
-            .tick_chars("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏⠋"),
-    );
-    pb.set_message(message.to_string());
-
+    let mut spinner = spinner::Spinner::new(message);
     let result = f();
-    pb.finish_and_clear();
 
     match &result {
-        Ok(_) => println!("✓ {}", message),
-        Err(_) => println!("✗ {}", message),
+        Ok(_) => spinner.finish_with_message(format!("✓ {}", message)),
+        Err(_) => spinner.finish_with_message(format!("✗ {}", message)),
     }
 
     result
