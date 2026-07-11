@@ -15,7 +15,22 @@ Check whether `flysoar` is available:
 flysoar --version
 ```
 
-When working from this repository and the command is unavailable, install it with Cargo:
+If the `flysoar` command is not available, install a prebuilt binary (macOS and Linux):
+
+```bash
+curl -fsSL https://flysoar-cli.vercel.app/install.sh | sh
+```
+
+To pin a version or change the install directory:
+
+```bash
+curl -fsSL https://flysoar-cli.vercel.app/install.sh | \
+  FLYSOAR_VERSION=v0.1.0 FLYSOAR_INSTALL_DIR="$HOME/.local/bin" sh
+```
+
+The installer verifies the release checksum before installing. Windows users can download the ZIP archive from the GitHub Releases page at https://github.com/Gahnxd/flysoar-cli/releases .
+
+When working from this repository, install from source with Cargo:
 
 ```bash
 cargo install --path .
@@ -23,6 +38,12 @@ flysoar --version
 ```
 
 Ensure `~/.cargo/bin` is on `PATH` after installation. Build and invoke `./target/release/flysoar` when a global install is unsuitable.
+
+## Other commands
+
+- `flysoar update` — Self-update by reinstalling from source.
+- `flysoar info` — Show installation status and binary location.
+- `flysoar uninstall` — Remove the flysoar binary (works regardless of install method).
 
 ## Gather the search details
 
@@ -77,6 +98,22 @@ flysoar search -o SFO -d JFK -D YYYY-MM-DD --raw -q
 | `--raw` | Return unmodified API offers. |
 | `--save` | Write normalized JSON results to a file. |
 | `-t`, `--timeout` | Set the request timeout in seconds; default is `90`. |
+
+## Output formats
+
+JSON (default) returns pretty-printed output with query metadata and offer summaries:
+
+```json
+{
+  "query": { "origin": "SFO", "destination": "JFK", ... },
+  "offers": [ { "price": 368.40, "airline": "American Airlines", ... } ],
+  "count": 42
+}
+```
+
+Table (`--output table`) prints a colored UTF-8 table with price, airline, flight number, route, times, stops, duration, and cabin.
+
+CSV (`--output csv`) produces flat rows with columns: price, currency, stops, airline, flight_numbers, depart_time, arrive_time, duration, cabin_class, route, emissions_kg.
 
 ## Report results responsibly
 
@@ -165,3 +202,11 @@ offer
 ```
 
 Treat this schema and the API-behavior guidance above as observed behavior, not a compatibility guarantee. Prefer live CLI output when it differs from these observations.
+
+## Links
+
+- Website: https://flysoar-cli.vercel.app
+- Install script: https://flysoar-cli.vercel.app/install.sh
+- GitHub: https://github.com/Gahnxd/flysoar-cli
+- Releases: https://github.com/Gahnxd/flysoar-cli/releases
+- Powered by: https://flysoar.ai

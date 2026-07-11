@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/copy-install-script.js",
+    "predev": "node scripts/copy-public-assets.js",
     "dev": "next dev",
-    "prebuild": "node scripts/copy-install-script.js",
+    "prebuild": "node scripts/copy-public-assets.js",
     "build": "next build",
     "start": "next start"
   },

@@ -2,3 +2,5 @@
 /website/.next
 /website/node_modules
 /website/public/install.sh
+/website/public/llms.txt
+/website/public/SKILL.md

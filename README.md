@@ -1,4 +1,4 @@
-# flysoar
+# Flysoar CLI
 
 CLI for searching flights via [FlySoar.ai](https://flysoar.ai)'s public API. No accounts, API keys, or authentication required.
 
