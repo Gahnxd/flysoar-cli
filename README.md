@@ -20,6 +20,25 @@ CLI for searching flights via [FlySoar.ai](https://flysoar.ai)'s anonymous publi
 
 ## Installation
 
+### Prebuilt binaries (macOS and Linux)
+
+Install the latest GitHub Release binary:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Gahnxd/flysoar-cli/main/install.sh | sh
+```
+
+To install a specific version or directory:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Gahnxd/flysoar-cli/main/install.sh | \
+  FLYSOAR_VERSION=v0.1.0 FLYSOAR_INSTALL_DIR="$HOME/.local/bin" sh
+```
+
+The installer verifies the release checksum before installing. Windows users can download the ZIP archive from the [GitHub Releases page](https://github.com/Gahnxd/flysoar-cli/releases).
+
+### From source
+
 ```bash
 cargo install --path .
 ```
